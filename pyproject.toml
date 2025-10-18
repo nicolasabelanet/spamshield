@@ -1,0 +1,37 @@
+[project]
+name = "spamshield"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ name = "Nicolas Abelanet", email = "mail@nicolasabelanet.com" }]
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi[standard]>=0.119.0",
+  "joblib>=1.5.2",
+  "prometheus-client>=0.23.1",
+  "pydantic>=2.12.3",
+  "pydantic-settings>=2.11.0",
+  "requests>=2.32.5",
+  "scikit-learn>=1.7.2",
+  "slowapi>=0.1.9",
+]
+
+[project.optional-dependencies]
+training = [
+  "numpy>=2.3.4",
+  "kagglehub>=0.3.13",
+  "pandas>=2.3.3",
+  "matplotlib>=3.10.7",
+]
+
+[project.scripts]
+spamsheild-api = "spamshield:main"
+train-spam-model = "spamshield.training.training:main"
+
+[build-system]
+requires = ["uv_build>=0.9.3,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=8.4.2"]
+training = ["kagglehub>=0.3.13"]
