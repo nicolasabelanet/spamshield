@@ -114,12 +114,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            --build-arg MODEL_VERSION=${{ needs.prepare.outputs.safe_version }} \
+            --build-arg SPAMSHIELD_MODEL_VERSION=${{ needs.prepare.outputs.safe_version }} \
             -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \
-            -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest \
             .
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }}
           docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
