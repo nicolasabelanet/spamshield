@@ -48,8 +48,9 @@ def small_grid() -> dict[str, Any]:
     }
 
 
-
-def train_pipeline(X_train: pd.Series, y_train: pd.Series) -> tuple[Pipeline, dict[str, Any]]:
+def train_pipeline(
+    X_train: pd.Series, y_train: pd.Series
+) -> tuple[Pipeline, dict[str, Any]]:
     """
     Train and return a calibrated spam text classification pipeline.
 
@@ -92,9 +93,9 @@ def train_pipeline(X_train: pd.Series, y_train: pd.Series) -> tuple[Pipeline, di
 
     Returns
     -------
-    final_pipe: 
+    final_pipe:
         A ready-to-use Pipeline that does TF-IDF -> calibrated classifier. Use this for infererence.
-    best_params: 
+    best_params:
         The best hyperparameters found by GridSearchCV.
     """
 
@@ -114,7 +115,6 @@ def train_pipeline(X_train: pd.Series, y_train: pd.Series) -> tuple[Pipeline, di
         n_jobs=-1,
         verbose=0,
     )
-
 
     # Fit the grid search and extract the best-performing pipeline.
     grid_search.fit(X_train, y_train)

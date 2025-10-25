@@ -73,7 +73,7 @@ def train(
         {
             "version": version,
             "model_sha256": model_sha256,
-            "model_filename": model_filename, 
+            "model_filename": model_filename,
             "threshold": best_threshold,
         },
         model_metadata_path,

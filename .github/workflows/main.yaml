@@ -46,7 +46,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          uv run pytest 
+          uv run pytest
 
   train:
     runs-on: ubuntu-latest
@@ -109,7 +109,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} 
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
         run: |
@@ -121,5 +121,5 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \ 
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest                                      
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest

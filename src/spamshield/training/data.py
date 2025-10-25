@@ -1,5 +1,4 @@
 from pathlib import Path
-import shutil
 import pandas as pd
 import kagglehub
 from sklearn.model_selection import train_test_split
@@ -27,7 +26,9 @@ def clean_data(raw_data_file: Path, cleaned_data_output: Path) -> Path:
     return cleaned_data_output
 
 
-def load_test_train_data(data_dir: Path) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+def load_test_train_data(
+    data_dir: Path,
+) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
     cleaned_data_file = data_dir / "cleaned-spam.csv"
 
     if not cleaned_data_file.exists():
