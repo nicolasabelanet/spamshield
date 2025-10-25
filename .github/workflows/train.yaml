@@ -8,30 +8,116 @@ on:
       - "v*.*.*"
 
 jobs:
-  train:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      safe_version: ${{ steps.compute.outputs.safe_version }}
+    steps:
+      - name: Compute safe version
+        id: compute
+        run: |
+          SAFE_VERSION=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
+          echo "safe_version=${SAFE_VERSION}" >> $GITHUB_OUTPUT
+
+  test:
+    runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
       - name: Install project deps
+        run: uv sync --locked --all-extras --dev
+
+      - name: Ruff check
         run: |
-            pip install .[training]
+          ruff check .
+          ruff format --check .
+
+      - name: Run pytest
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
+
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install project deps
+        run: uv sync --locked --all-extras --dev
 
       - name: Train model
         run: |
-          train-spam-model --version ${{ github.ref_name }}
+          uv run train-spam-model --version ${{ needs.prepare.outputs.safe_version }}
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
 
-      # - name: Upload model artifacts for next job
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: model_artifacts
-      #     path: models/${{ github.ref_name }}
+      - name: Show metrics
+        run: |
+          echo "Metrics for this run:"
+          cat models/${{ needs.prepare.outputs.safe_version }}/model_metrics.json || true
+        shell: bash
+
+      - name: Upload artifacts
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: model_artifacts
+          path: models/${{ needs.prepare.outputs.safe_version }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: train
+    if: startsWith(github.ref, 'refs/tags/') # whole job runs only on tag pushes
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Download model artifacts from train job
+        uses: actions/download-artifact@v4
+        with:
+          name: model_artifacts
+          path: models/${{ needs.prepare.outputs.safe_version }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg MODEL_VERSION=${{ needs.prepare.outputs.safe_version }} \
+            -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \
+            -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ needs.prepare.outputs.safe_version }} \ 
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest                                      

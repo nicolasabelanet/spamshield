@@ -3,7 +3,7 @@ import time
 from fastapi import Header, HTTPException, Request
 
 from spamshield.core import signature
-from spamshield.app.config import settings
+from spamshield.api.config import settings
 
 
 def _compare_digest(a: str, b: str) -> bool:

@@ -1,0 +1,13 @@
+# Ignore everything by default
+**
+
+# Keep dependency manifests
+!pyproject.toml
+!uv.lock
+!README.md
+
+# Keep source code
+!src
+
+# Keep trained model artifacts
+!models

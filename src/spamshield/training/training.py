@@ -79,13 +79,11 @@ def train(
         model_metadata_path,
     )
 
-    if reports:
-        reports_dir: Path = models_dir / "reports"
-        reports_dir.mkdir(exist_ok=True)
-        metrics_path = reports_dir / "metrics.json"
+    metrics_path = version_path / "model_metrics.json"
+    (metrics_path).write_text(json.dumps(model_metrics, indent=2))
 
-        (metrics_path).write_text(json.dumps(model_metrics, indent=2))
-        plots.save_plots(y_true_bin, prob_spam, reports_dir)
+    if reports:
+        plots.save_plots(y_true_bin, prob_spam, version_path)
 
 
 def main():

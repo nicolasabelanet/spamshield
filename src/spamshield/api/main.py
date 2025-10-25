@@ -7,18 +7,18 @@ from starlette.responses import Response
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 
-from spamshield.app.schemas import (
+from spamshield.api.schemas import (
     PredictRequest,
     PredictResponse,
     Prediction,
     HealthResponse,
 )
-from spamshield.app.service import get_model
-from spamshield.app.auth import require_api_key
-from spamshield.app.middleware import RequestContextMiddleware
-from spamshield.app.logs import configure_logging
-from spamshield.app.metrics import INFER_TIME
-from spamshield.app.config import settings
+from spamshield.api.service import get_model
+from spamshield.api.auth import require_api_key
+from spamshield.api.middleware import RequestContextMiddleware
+from spamshield.api.logs import configure_logging
+from spamshield.api.metrics import INFER_TIME
+from spamshield.api.config import settings
 
 configure_logging(json_logs=settings.LOG_JSON, level=settings.LOG_LEVEL)
 
