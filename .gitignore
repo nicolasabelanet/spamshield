@@ -6,6 +6,7 @@ dist/
 wheels/
 models/
 .DS_STORE
+dataset/
 *.egg-info
 
 # Virtual environments
