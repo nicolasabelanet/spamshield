@@ -10,9 +10,11 @@ import spamshield.api.models
 from spamshield.common.signature import sha256_hash_file
 from spamshield.model.types import ModelMetadata
 
-MODELS_PATH = resources.files(spamshield.api.models)
+# Anchor to find versioned spam models at.
+MODELS_PATH: Final[Traversable] = resources.files(spamshield.api.models)
 
-MODEL_METADATA_ADAPTER = TypeAdapter(ModelMetadata)
+# Data adapter to validate loaded metadata adheres to expected shape.
+MODEL_METADATA_ADAPTER: Final[TypeAdapter[ModelMetadata]] = TypeAdapter(ModelMetadata)
 
 
 class SpamModel:
@@ -65,7 +67,7 @@ class SpamModel:
         for p in probabilities:
             # Extract the spam probability for this sample
             probability_spam: float = float(p[spam_index])
-            
+
             # Apply model threshold to decide spam vs ham
             label: Literal["spam", "ham"] = (
                 "spam" if probability_spam >= self._threshold else "ham"
@@ -189,7 +191,7 @@ class SpamModelDependency:
         if not valid_signature:
             raise RuntimeError("Could not validate integrity of spam model.")
 
-        # 3. Load the spam model 
+        # 3. Load the spam model
         model = joblib.load(model_filepath)
 
         # 4. Validate type
@@ -197,6 +199,7 @@ class SpamModelDependency:
             raise RuntimeError("Model loaded from file was not a Pipeline.")
 
         return model, model_metadata
+
 
 # Global singleton dependency instance bound to the configured model version.
 # Imported by FastAPI routes to inject the SpamShield model at runtime.

@@ -1,13 +1,22 @@
 import hmac
 import time
+from typing import Final
 
 from fastapi import Header, HTTPException, Request
 
 from spamshield.api.config import settings
 from spamshield.common import signature
 
+ALLOWED_TIME_SKEW_SEC: Final[int] = 300
+
 
 def _compare_digest(a: str, b: str) -> bool:
+    """
+    Perform a constant-time string comparison to prevent timing attacks.
+
+    Returns True if the two digests match exactly, False otherwise.
+    Falls back safely if `hmac.compare_digest` raises an exception.
+    """
     try:
         return hmac.compare_digest(a, b)
     except Exception:
@@ -15,17 +24,30 @@ def _compare_digest(a: str, b: str) -> bool:
 
 
 def _find_first_matching_api_key(x_api_key: str | None) -> str | None:
+    """
+    Validate the provided API key against the configured keys.
+
+    Returns the matching key (primary or secondary) if valid,
+    or None if the key is missing or does not match.
+    """
     if x_api_key is None:
         return None
 
-    valid_keys = (
-        key for key in (settings.API_KEY, settings.SECONDARY_API_KEY) if len(key) > 0
+    candidate_hash: str = signature.hash_api_key(x_api_key)
+
+    # Filter out unset or empty keys from configuration
+    valid_hashes = (
+        key
+        for key in (settings.API_KEY_HASH, settings.SECONDARY_API_KEY_HASH)
+        if len(key) > 0
     )
 
-    for key in valid_keys:
-        if _compare_digest(x_api_key, key):
-            return key
+    # Compare each valid key in constant time
+    for hash in valid_hashes:
+        if _compare_digest(candidate_hash, hash):
+            return hash
 
+    # No valid key found
     return None
 
 
@@ -35,40 +57,59 @@ async def require_api_key(
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
 ):
+    """
+    FastAPI dependency enforcing API key + HMAC authentication.
+
+    1. Verifies that the provided API key matches either the primary or
+       secondary configured key.
+    2. If HMAC verification is required (controlled by `settings.REQUIRE_HMAC`),
+       validates the timestamp and cryptographic signature.
+    3. Rejects requests with expired timestamps (>5 min skew), invalid formats,
+       or mismatched HMAC signatures.
+
+    Raises
+    ------
+    HTTPException(401)
+        If the authentication fails at any stage.
+    """
+    # Verify that the API key exists and matches a configured one
     matching_key: str | None = _find_first_matching_api_key(x_api_key)
 
     if not x_api_key or not matching_key:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # Signature signing not required.
+    # If HMAC signing is disabled, only the API key check is required
     if not settings.REQUIRE_HMAC:
         return
 
-    # Ensure that the signature and timestamp are present.
+    # Ensure required headers are present for HMAC validation
     if not (x_timestamp and x_signature):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     now: int = int(time.time())
 
+    # Parse timestamp and validate its freshness (max ±5 minutes)
     try:
         timestamp = int(x_timestamp)
 
     except ValueError:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if abs(now - timestamp) > 300:
+    if abs(now - timestamp) > ALLOWED_TIME_SKEW_SEC:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # Build message signature
-    secret: str = matching_key
+    # Compute HMAC signature for request body and metadata
     method: str = request.method.upper()
     path: str = request.url.path
 
     content: bytes = await request.body()
 
     computed_signature: str = signature.compute_message_signature(
-        method, path, timestamp, content, x_api_key, secret
+        method, path, timestamp, content, x_api_key, settings.API_SECRET
     )
 
+    print(computed_signature, x_signature)
+
+    # Reject if computed signature does not match provided one
     if not _compare_digest(computed_signature, x_signature):
         raise HTTPException(status_code=401, detail="Unauthorized")

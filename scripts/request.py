@@ -10,7 +10,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    client = SpamShieldAPIClient(args.url, api_key="dev-key")
+    client = SpamShieldAPIClient(args.url, api_key="dev-key", api_secret="foo")
     response = client.predict([args.message])
 
     print(response)

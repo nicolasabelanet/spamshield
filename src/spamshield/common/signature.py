@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
+def hash_api_key(raw_key: str) -> str:
+    # Compute a deterministic SHA-256 hash of an API key.
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+
 
 def sha256_hash_file(path: Path | Traversable) -> str:
     """
