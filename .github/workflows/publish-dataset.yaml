@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
  
 jobs:
-  publish-dataset:
+  dataset:
     runs-on: ubuntu-latest
-    env:
-      DATASET: dataset/spam.csv
+    # env:
+    #   DATASET: dataset/spam.csv
 
     steps:
       - name: Check out code
