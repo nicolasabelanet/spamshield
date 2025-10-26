@@ -5,7 +5,7 @@ import uuid
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .metrics import PAYLOAD_SIZE, REQ_TIME, REQUESTS
+from spamshield.api.metrics import PAYLOAD_SIZE, REQ_TIME, REQUESTS
 
 log = logging.getLogger("app")
 

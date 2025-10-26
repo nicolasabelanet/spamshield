@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
 
-from spamshield.training import scoring
+from spamshield.model import scoring
 
 if TYPE_CHECKING:
     import pandas as pd

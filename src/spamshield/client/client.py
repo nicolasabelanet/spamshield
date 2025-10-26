@@ -5,7 +5,7 @@ from typing import Any
 import requests
 
 from spamshield.api.schemas import PredictResponse
-from spamshield.core import signature
+from spamshield.common import signature
 
 
 class SpamShieldAPIClient:

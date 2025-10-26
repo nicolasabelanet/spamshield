@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any
 import joblib
 
 from spamshield.core.signature import sha256_hash_file
-from spamshield.training import data, metrics, pipeline, plots
+from spamshield.model import data, metrics, pipeline, plots
+from spamshield.model.types import ModelMetadata
 
 if TYPE_CHECKING:
     import numpy as np
@@ -71,13 +72,15 @@ def train(
     model_path_with_sha = version_path / model_filename
     shutil.move(model_path, model_path_with_sha)
 
+    metadata: ModelMetadata = {
+        "version": version,
+        "model_sha256": model_sha256,
+        "model_filename": model_filename,
+        "threshold": best_threshold,
+    }
+
     joblib.dump(
-        {
-            "version": version,
-            "model_sha256": model_sha256,
-            "model_filename": model_filename,
-            "threshold": best_threshold,
-        },
+        metadata,
         model_metadata_path,
     )
 
@@ -93,13 +96,10 @@ def main():
     parser.add_argument(
         "--version", type=str, help="model version like v1.0.4", required=True
     )
-    parser.add_argument(
-        "--dataset", type=Path, help="dataset location", required=True
-    )
+    parser.add_argument("--dataset", type=Path, help="dataset location", required=True)
     parser.add_argument(
         "--reports", action="store_true", help="generate training reports"
     )
-
 
     args = parser.parse_args()
 

@@ -4,7 +4,7 @@ import time
 from fastapi import Header, HTTPException, Request
 
 from spamshield.api.config import settings
-from spamshield.core import signature
+from spamshield.common import signature
 
 
 def _compare_digest(a: str, b: str) -> bool:
@@ -35,12 +35,9 @@ async def require_api_key(
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
 ):
-    print("KEY", x_api_key)
-    print("TIMESTAMP", x_timestamp)
-    matching_key = _find_first_matching_api_key(x_api_key)
+    matching_key: str | None = _find_first_matching_api_key(x_api_key)
 
     if not x_api_key or not matching_key:
-        print("no api key")
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     # Signature signing not required.
@@ -49,14 +46,16 @@ async def require_api_key(
 
     # Ensure that the signature and timestamp are present.
     if not (x_timestamp and x_signature):
-        print("missing timestamp")
         raise HTTPException(status_code=401, detail="Unauthorized")
-    now = int(time.time())
+
+    now: int = int(time.time())
 
     try:
         timestamp = int(x_timestamp)
+
     except ValueError:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
     if abs(now - timestamp) > 300:
         raise HTTPException(status_code=401, detail="Unauthorized")
 

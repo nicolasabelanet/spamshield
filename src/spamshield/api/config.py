@@ -4,8 +4,9 @@ from pydantic import AnyHttpUrl
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env.dev")
+    model_config = SettingsConfigDict(env_file=".env.dev", env_prefix="SPAMSHIELD")
 
+    MODEL_VERSION: str
     API_TITLE: str = "spamsheild-api"
     API_VERSION: str = "1.0.0"
     API_KEY: str = ""
@@ -19,5 +20,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_JSON: bool = True
 
+    @classmethod
+    def env(cls) -> Settings:
+        return Settings.model_validate({})
 
-settings = Settings()
+
+settings = Settings.env()
