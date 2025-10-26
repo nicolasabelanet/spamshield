@@ -1039,6 +1039,9 @@ training = [
 ]
 
 [package.dev-dependencies]
+client = [
+    { name = "requests" },
+]
 dev = [
     { name = "pre-commit" },
     { name = "pytest" },
@@ -1063,6 +1066,7 @@ requires-dist = [
 provides-extras = ["training"]
 
 [package.metadata.requires-dev]
+client = [{ name = "requests", specifier = ">=2.32.5" }]
 dev = [
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pytest", specifier = ">=8.4.2" },

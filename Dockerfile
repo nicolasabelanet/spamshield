@@ -18,7 +18,7 @@ ENV SPAMSHIELD_MODEL_VERSION=${SPAMSHIELD_MODEL_VERSION}
 
 # Copy the trained model artifacts from CI
 # (models/v1.0.4 → /app/model)
-COPY models/${SPAMSHIELD_MODEL_VERSION}/ ./spamshield/app/models/${SPAMSHIELD_MODEL_VERSION}
+COPY models/${SPAMSHIELD_MODEL_VERSION}/ ./src/spamshield/api/models/${SPAMSHIELD_MODEL_VERSION}
 
 # Expose port and set entrypoint
 EXPOSE 8080
