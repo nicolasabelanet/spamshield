@@ -28,7 +28,7 @@ jobs:
 
       - name: Authenticate to Kaggle and download dataset
         run: |
-          uv run download-spam-dataset --ouput $DATASET
+          uv run download-spam-dataset --output $DATASET
 
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
