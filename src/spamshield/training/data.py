@@ -17,7 +17,7 @@ def download_data(dataset_path: Path) -> Path:
 
     dataset_path.parent.mkdir(exist_ok=True, parents=True)
 
-    cleaned_data_set = clean_data(pd.read_csv(raw_data_set_path))
+    cleaned_data_set = clean_data(pd.read_csv(raw_data_set_path, encoding="latin-1"))
     cleaned_data_set.to_csv(dataset_path)
 
     return raw_data_set_path
@@ -52,6 +52,7 @@ def load_test_train_data(
     assert isinstance(y_test, pd.Series), "y_train was not the expected type"
 
     return X_train, X_test, y_train, y_test
+
 
 def main() -> None:
     parser = ArgumentParser()
