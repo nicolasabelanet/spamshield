@@ -1,7 +1,7 @@
 name: publish-dataset
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
  
 jobs:
   publish-dataset:
@@ -13,29 +13,29 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: Sync deps
-        run: uv sync --locked --all-extras 
-
-      - name: Authenticate to Kaggle and download dataset
-        run: |
-          uv run download-spam-dataset --ouput $DATASET
-
-        env:
-          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-
-      - name: Upload dataset artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: spamshield-dataset
-          path: $DATASET
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version-file: ".python-version"
+      #
+      # - name: Install uv
+      #   uses: astral-sh/setup-uv@v6
+      #   with:
+      #     enable-cache: true
+      #
+      # - name: Sync deps
+      #   run: uv sync --locked --all-extras 
+      #
+      # - name: Authenticate to Kaggle and download dataset
+      #   run: |
+      #     uv run download-spam-dataset --ouput $DATASET
+      #
+      #   env:
+      #     KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      #     KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      #
+      # - name: Upload dataset artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: spamshield-dataset
+      #     path: $DATASET
