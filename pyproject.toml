@@ -27,8 +27,8 @@ training = [
 client = ["requests>=2.32.5"]
 
 [project.scripts]
-spamsheild-api = "spamshield:main"
 train-spam-model = "spamshield.training.training:main"
+dowload-spam-dataset = "spamshield.training.training:main"
 
 [build-system]
 requires = ["uv_build>=0.9.3,<0.10.0"]

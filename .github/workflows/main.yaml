@@ -50,7 +50,8 @@ jobs:
   train:
     runs-on: ubuntu-latest
     needs: [prepare, test]
-
+    env:
+      DATASET=models/dataset/spam.csv
     steps:
       - name: Check out code
         uses: actions/checkout@v5
@@ -68,18 +69,18 @@ jobs:
       - name: Install project deps
         run: uv sync --locked --all-extras 
 
+      - name: Download dataset artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spamshield-dataset
+          path: $DATASET
+
       - name: Train model
         run: |
-          uv run train-spam-model --version ${{ needs.prepare.outputs.safe_version }}
+          uv run train-spam-model --version ${{ needs.prepare.outputs.safe_version }} --dataset $DATASET
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-
-      - name: Show metrics
-        run: |
-          echo "Metrics for this run:"
-          cat models/${{ needs.prepare.outputs.safe_version }}/model_metrics.json || true
-        shell: bash
 
       - name: Upload artifacts
         if: startsWith(github.ref, 'refs/tags/')

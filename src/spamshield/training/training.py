@@ -94,18 +94,22 @@ def main():
         "--version", type=str, help="model version like v1.0.4", required=True
     )
     parser.add_argument(
+        "--dataset", type=str, help="dataset location", required=True
+    )
+    parser.add_argument(
         "--reports", action="store_true", help="generate training reports"
     )
 
+
     args = parser.parse_args()
+
+    if not args.dataset.exists():
+        print("Dataset does not exist")
 
     models_dir = Path("models")
     models_dir.mkdir(exist_ok=True)
 
-    data_dir = models_dir / "data"
-    data_dir.mkdir(exist_ok=True)
-
-    test_train_data = data.load_test_train_data(data_dir)
+    test_train_data = data.load_test_train_data(args.dataset)
 
     train(test_train_data, models_dir, args.version, args.reports)
 

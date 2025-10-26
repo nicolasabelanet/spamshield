@@ -1,4 +1,5 @@
 from pathlib import Path
+from argparse import ArgumentParser
 
 import kagglehub
 import pandas as pd
@@ -7,45 +8,40 @@ from sklearn.model_selection import train_test_split
 RANDOM_STATE = 42
 
 
-def download_data() -> Path:
+def download_data(dataset_path: Path) -> Path:
     file = kagglehub.dataset_download("uciml/sms-spam-collection-dataset")
-    file_path = Path(file) / "spam.csv"
+    raw_data_set_path = Path(file) / "spam.csv"
 
-    if not file_path.exists():
+    if not raw_data_set_path.exists():
         raise RuntimeError("Could not find spam data set in cache directory.")
 
-    return file_path
+    dataset_path.parent.mkdir(exist_ok=True, parents=True)
+
+    cleaned_data_set = clean_data(pd.read_csv(raw_data_set_path))
+    cleaned_data_set.to_csv(dataset_path)
+
+    return raw_data_set_path
 
 
-def clean_data(raw_data_file: Path, cleaned_data_output: Path) -> Path:
-    df = pd.read_csv(raw_data_file, encoding="latin-1").rename(
-        columns={"v1": "label", "v2": "text"}
-    )[["label", "text"]]
-    df.to_csv(cleaned_data_output)
-    print(f"Wrote cleaned data file to '{cleaned_data_output}'")
-
-    return cleaned_data_output
+def clean_data(raw_data_set: pd.DataFrame) -> pd.DataFrame:
+    df = raw_data_set.rename(columns={"v1": "label", "v2": "text"})[["label", "text"]]
+    assert isinstance(df, pd.DataFrame)
+    return df
 
 
 def load_test_train_data(
-    data_dir: Path,
+    dataset_path: Path,
 ) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
-    cleaned_data_file = data_dir / "cleaned-spam.csv"
+    if not dataset_path.exists():
+        download_data(dataset_path)
 
-    if not cleaned_data_file.exists():
-        raw_data_file = download_data()
-        clean_data(raw_data_file, cleaned_data_file)
-
-    else:
-        print(f"Found cached data '{cleaned_data_file}'")
-
-    df = pd.read_csv(cleaned_data_file)
+    dataset = pd.read_csv(dataset_path)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        df["text"],
-        df["label"],
+        dataset["text"],
+        dataset["label"],
         test_size=0.2,
-        stratify=df["label"],
+        stratify=dataset["label"],
         random_state=RANDOM_STATE,
     )
 
@@ -56,3 +52,9 @@ def load_test_train_data(
     assert isinstance(y_test, pd.Series), "y_train was not the expected type"
 
     return X_train, X_test, y_train, y_test
+
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    download_data(args.output)
