@@ -1,12 +1,13 @@
 import os
-from typing import Any
-import joblib
 from importlib import resources
-import spamshield.app.models
+from typing import Any
+
+import joblib
+
+import spamshield.api.models
 from spamshield.core.signature import sha256_hash_file
 
-
-MODELS_PATH = resources.files(spamshield.app.models)
+MODELS_PATH = resources.files(spamshield.api.models)
 
 
 def load_model() -> tuple[Any, Any]:
@@ -15,7 +16,9 @@ def load_model() -> tuple[Any, Any]:
     )
 
     if model_version is None:
-        raise RuntimeError("Cannot load model without SPAMSHIELD_MODEL_VERSION environment variable.")
+        raise RuntimeError(
+            "Cannot load model without SPAMSHIELD_MODEL_VERSION environment variable."
+        )
 
     model_metadata_path = MODELS_PATH / model_version / "model_metadata.joblib"
 
@@ -54,6 +57,7 @@ class SpamModel:
 
 
 _model_singleton = None
+
 
 def get_model() -> SpamModel:
     global _model_singleton

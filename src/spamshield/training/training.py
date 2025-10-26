@@ -1,15 +1,17 @@
-from pathlib import Path
-import shutil
-from typing import Any
-import pandas as pd
-import numpy as np
 import json
+import shutil
 from argparse import ArgumentParser
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
 import joblib
 
-
 from spamshield.core.signature import sha256_hash_file
-from spamshield.training import data, pipeline, plots, metrics
+from spamshield.training import data, metrics, pipeline, plots
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 
 def train(
@@ -73,19 +75,17 @@ def train(
         {
             "version": version,
             "model_sha256": model_sha256,
-            "model_filename": model_filename, 
+            "model_filename": model_filename,
             "threshold": best_threshold,
         },
         model_metadata_path,
     )
 
-    if reports:
-        reports_dir: Path = models_dir / "reports"
-        reports_dir.mkdir(exist_ok=True)
-        metrics_path = reports_dir / "metrics.json"
+    metrics_path = version_path / "model_metrics.json"
+    (metrics_path).write_text(json.dumps(model_metrics, indent=2))
 
-        (metrics_path).write_text(json.dumps(model_metrics, indent=2))
-        plots.save_plots(y_true_bin, prob_spam, reports_dir)
+    if reports:
+        plots.save_plots(y_true_bin, prob_spam, version_path)
 
 
 def main():
@@ -94,18 +94,22 @@ def main():
         "--version", type=str, help="model version like v1.0.4", required=True
     )
     parser.add_argument(
+        "--dataset", type=str, help="dataset location", required=True
+    )
+    parser.add_argument(
         "--reports", action="store_true", help="generate training reports"
     )
 
+
     args = parser.parse_args()
+
+    if not args.dataset.exists():
+        print("Dataset does not exist")
 
     models_dir = Path("models")
     models_dir.mkdir(exist_ok=True)
 
-    data_dir = models_dir / "data"
-    data_dir.mkdir(exist_ok=True)
-
-    test_train_data = data.load_test_train_data(data_dir)
+    test_train_data = data.load_test_train_data(args.dataset)
 
     train(test_train_data, models_dir, args.version, args.reports)
 
