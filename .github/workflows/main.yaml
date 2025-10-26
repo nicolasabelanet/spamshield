@@ -1,4 +1,4 @@
-name: train-model
+name: main
 
 on:
   push:

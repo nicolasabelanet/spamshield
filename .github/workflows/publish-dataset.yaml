@@ -7,6 +7,7 @@ jobs:
   publish-dataset:
     runs-on: ubuntu-latest
     env:
+    ----
       DATASET: dataset/spam.csv
 
     steps:
