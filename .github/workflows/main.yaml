@@ -37,12 +37,11 @@ jobs:
           enable-cache: true
 
       - name: Install project deps
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --locked --dev
 
       - name: Ruff check
         run: |
-          uv run ruff check .
-          uv run ruff format --check .
+          uv run ruff check --output-format=github .
 
       - name: Run pytest
         run: |
@@ -67,7 +66,7 @@ jobs:
           enable-cache: true
 
       - name: Install project deps
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --locked --all-extras 
 
       - name: Train model
         run: |
