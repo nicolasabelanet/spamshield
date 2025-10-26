@@ -4,9 +4,8 @@ from spamshield.common import signature
 
 
 def main() -> None:
-    parser = ArgumentParser()
-
-    parser.add_argument("--key", "-k", type=str, required=True)
+    parser = ArgumentParser("hash-api-key")
+    parser.add_argument("--key", "-k", type=str, required=True, help="API key to hash")
 
     args = parser.parse_args()
 
