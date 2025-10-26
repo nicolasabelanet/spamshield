@@ -6,7 +6,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-
 def sha256_hash_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -25,4 +24,3 @@ def compute_message_signature(
     return hmac.new(
         secret.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
     ).hexdigest()
-
