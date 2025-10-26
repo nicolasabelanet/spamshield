@@ -94,7 +94,7 @@ def main():
         "--version", type=str, help="model version like v1.0.4", required=True
     )
     parser.add_argument(
-        "--dataset", type=str, help="dataset location", required=True
+        "--dataset", type=Path, help="dataset location", required=True
     )
     parser.add_argument(
         "--reports", action="store_true", help="generate training reports"

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 RANDOM_STATE = 42
 
 
-def download_data(dataset_path: Path) -> Path:
+def create_data_set(dataset_path: Path) -> Path:
     file = kagglehub.dataset_download("uciml/sms-spam-collection-dataset")
     raw_data_set_path = Path(file) / "spam.csv"
 
@@ -33,7 +33,7 @@ def load_test_train_data(
     dataset_path: Path,
 ) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
     if not dataset_path.exists():
-        download_data(dataset_path)
+        create_data_set(dataset_path)
 
     dataset = pd.read_csv(dataset_path)
 
@@ -58,4 +58,4 @@ def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    download_data(args.output)
+    create_data_set(args.output)
