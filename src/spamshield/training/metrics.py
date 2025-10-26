@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
@@ -58,7 +59,7 @@ def compute_metrics_dict(
     """
     y_pred_best: np.ndarray = (prob_spam >= best_f1_threshold).astype(int)
 
-    metrics = {
+    return {
         "roc_auc": roc_auc_score(y_true_bin, prob_spam),
         "pr_auc": average_precision_score(y_true_bin, prob_spam),
         "f1_at_0.5": f1_score(y_true_bin, (prob_spam >= 0.5).astype(int)),
@@ -69,8 +70,6 @@ def compute_metrics_dict(
         "best_hyperparams": best_hyperparams,
         "n_samples": n_samples,
     }
-
-    return metrics
 
 
 def tune_f1_threshold(

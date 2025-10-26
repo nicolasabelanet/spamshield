@@ -1,24 +1,24 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 from starlette.responses import Response
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.errors import RateLimitExceeded
 
-from spamshield.api.schemas import (
-    PredictRequest,
-    PredictResponse,
-    Prediction,
-    HealthResponse,
-)
-from spamshield.api.service import get_model
 from spamshield.api.auth import require_api_key
-from spamshield.api.middleware import RequestContextMiddleware
+from spamshield.api.config import settings
 from spamshield.api.logs import configure_logging
 from spamshield.api.metrics import INFER_TIME
-from spamshield.api.config import settings
+from spamshield.api.middleware import RequestContextMiddleware
+from spamshield.api.schemas import (
+    HealthResponse,
+    Prediction,
+    PredictRequest,
+    PredictResponse,
+)
+from spamshield.api.service import get_model
 
 configure_logging(json_logs=settings.LOG_JSON, level=settings.LOG_LEVEL)
 

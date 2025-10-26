@@ -1,15 +1,17 @@
-from pathlib import Path
-import shutil
-from typing import Any
-import pandas as pd
-import numpy as np
 import json
+import shutil
 from argparse import ArgumentParser
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
 import joblib
 
-
 from spamshield.core.signature import sha256_hash_file
-from spamshield.training import data, pipeline, plots, metrics
+from spamshield.training import data, metrics, pipeline, plots
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 
 def train(

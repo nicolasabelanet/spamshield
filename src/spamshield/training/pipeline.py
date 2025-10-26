@@ -1,13 +1,16 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
-import pandas as pd
 
 from spamshield.training import scoring
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def small_grid() -> dict[str, Any]:
@@ -94,12 +97,14 @@ def train_pipeline(
     Returns
     -------
     final_pipe:
-        A ready-to-use Pipeline that does TF-IDF -> calibrated classifier. Use this for infererence.
+        A ready-to-use Pipeline that does TF-IDF -> calibrated classifier. Use this
+        for infererence.
     best_params:
         The best hyperparameters found by GridSearchCV.
     """
 
-    # This pipeline ensures the entire preprocessing (vectorization + classification) can be treated as a single model object.
+    # This pipeline ensures the entire preprocessing (vectorization + classification)
+    # can be treated as a single model object.
     base_pipeline = Pipeline(
         [
             ("tfidf", TfidfVectorizer()),

@@ -1,7 +1,12 @@
-import numpy as np
-from pathlib import Path
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, precision_recall_curve
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import numpy as np
 
 
 def save_plots(y_true_bin: np.ndarray, prob_spam: np.ndarray, report_dir: Path):

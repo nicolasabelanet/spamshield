@@ -1,10 +1,11 @@
 import os
-from typing import Any
-import joblib
 from importlib import resources
+from typing import Any
+
+import joblib
+
 import spamshield.api.models
 from spamshield.core.signature import sha256_hash_file
-
 
 MODELS_PATH = resources.files(spamshield.api.models)
 

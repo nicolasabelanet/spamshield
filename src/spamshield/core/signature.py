@@ -1,6 +1,10 @@
 import hashlib
 import hmac
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 
 def sha256_hash_file(path: Path) -> str:
@@ -18,8 +22,7 @@ def compute_message_signature(
 
     message = f"{method}\n{path}\n{timestamp}\n{content_sha256}\n{api_key}"
 
-    signature = hmac.new(
+    return hmac.new(
         secret.encode("utf-8"), message.encode("utf-8"), hashlib.sha256
     ).hexdigest()
 
-    return signature

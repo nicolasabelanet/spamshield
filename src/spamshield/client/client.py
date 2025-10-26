@@ -1,6 +1,7 @@
-import time
 import json
+import time
 from typing import Any
+
 import requests
 
 from spamshield.api.schemas import PredictResponse

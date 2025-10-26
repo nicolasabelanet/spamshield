@@ -1,9 +1,11 @@
+import logging
 import time
 import uuid
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from .metrics import REQUESTS, REQ_TIME, PAYLOAD_SIZE
-import logging
+
+from .metrics import PAYLOAD_SIZE, REQ_TIME, REQUESTS
 
 log = logging.getLogger("app")
 

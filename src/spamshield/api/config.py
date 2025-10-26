@@ -1,5 +1,9 @@
-from pydantic import AnyHttpUrl
+from typing import TYPE_CHECKING
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from pydantic import AnyHttpUrl
 
 
 class Settings(BaseSettings):
