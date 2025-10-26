@@ -7,7 +7,7 @@ jobs:
   publish-dataset:
     runs-on: ubuntu-latest
     env:
-      DATASET=models/dataset/spam.csv
+      DATASET: dataset/spam.csv
 
     steps:
       - name: Check out code

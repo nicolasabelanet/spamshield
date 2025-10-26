@@ -51,7 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, test]
     env:
-      DATASET=models/dataset/spam.csv
+      DATASET: dataset/spam.csv
+
     steps:
       - name: Check out code
         uses: actions/checkout@v5
