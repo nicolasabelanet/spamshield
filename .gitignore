@@ -5,9 +5,13 @@ build/
 dist/
 wheels/
 models/
+src/spamshield/api/models/*
+!src/spamshield/api/models/__init__.py
 .DS_STORE
 dataset/
 *.egg-info
+coverage.xml
+.coverage
 
 # Virtual environments
 .venv
