@@ -4,12 +4,20 @@ __pycache__/
 build/
 dist/
 wheels/
-models/
+*.egg-info
+
+# Runtime models
 src/spamshield/api/models/*
 !src/spamshield/api/models/__init__.py
+
+# Training folder
+/models
+/dataset
+
+# OS files
 .DS_STORE
-dataset/
-*.egg-info
+
+# Test files
 coverage.xml
 .coverage
 
