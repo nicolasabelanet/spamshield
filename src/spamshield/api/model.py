@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import functools
 from importlib import resources
 from importlib.resources.abc import Traversable
 from fastapi import Request
@@ -16,8 +17,6 @@ MODELS_PATH: Final[Traversable] = resources.files(spamshield.api.models)
 
 # Data adapter to validate loaded metadata adheres to expected shape.
 MODEL_METADATA_ADAPTER: Final[TypeAdapter[ModelMetadata]] = TypeAdapter(ModelMetadata)
-
-type ModelLoader = Callable[[str], SpamModel]
 
 
 class SpamModel:
@@ -41,8 +40,13 @@ class SpamModel:
 
     @property
     def version(self) -> str:
-        """Version string combinining model version and unique SHA identifier."""
-        return f"1.0.0+{self._metadata['model_sha256']}"
+        """
+        Return a stable runtime version identifier for the loaded model.
+
+        The identifier concatenates the human-readable model version with a
+        content hash, e.g. "v1.0.0+ab12cd34...".
+        """
+        return f"{self._metadata['version']}+{self._metadata['model_sha256']}"
 
     def predict(self, texts: list[str]) -> list[tuple[str, float]]:
         """
@@ -82,6 +86,10 @@ class SpamModel:
         return predictions
 
 
+# Expose a callable signature representing "load a model by version".
+type ModelLoader = Callable[[str], SpamModel]
+
+
 def load_model(model_version: str) -> SpamModel:
     """
     Load and validate the spam model and its associated metadata.
@@ -94,22 +102,22 @@ def load_model(model_version: str) -> SpamModel:
 
     Returns
     -------
-    tuple[Pipeline, ModelMetadata]
-        A tuple `(pipeline, metadata)` where:
-        - `pipeline` is a scikit-learn `Pipeline` object used for inference.
-        - `metadata` is a validated `ModelMetadata` dictionary.
+    SpamModel
+        A runtime-safe model wrapper that exposes `predict()` and `version`.
 
     Raises
     ------
+    ValidationError
+        The model metadata is not the correct shape.
     RuntimeError
-        If checksum validation fails or the loaded object is not a valid
-        scikit-learn `Pipeline`.
+        The model file checksum does not match the metadata or
+        the loaded object is not a scikit-learn `Pipeline`.
     """
     model_metadata_path: Traversable = (
         MODELS_PATH / model_version / "model_metadata.joblib"
     )
 
-    # 1. Load model metadata and validate schema
+    # Load model metadata and validate schema
     model_metadata: ModelMetadata = MODEL_METADATA_ADAPTER.validate_python(
         joblib.load(model_metadata_path)
     )
@@ -117,7 +125,7 @@ def load_model(model_version: str) -> SpamModel:
     model_filename: str = model_metadata["model_filename"]
     model_filepath: Traversable = MODELS_PATH / model_version / model_filename
 
-    # 2. Validate the model file's signature against the metadata
+    # Validate the model file's signature against the metadata
     valid_signature: bool = model_metadata["model_sha256"] == sha256_hash_file(
         model_filepath
     )
@@ -125,17 +133,28 @@ def load_model(model_version: str) -> SpamModel:
     if not valid_signature:
         raise RuntimeError("Could not validate integrity of spam model.")
 
-    # 3. Load the spam model
+    # Load the spam model
     model = joblib.load(model_filepath)
 
-    # 4. Validate type
+    # Validate type
     if not isinstance(model, Pipeline):
         raise RuntimeError("Model loaded from file was not a Pipeline.")
 
     return SpamModel(model, model_metadata)
 
 
+@functools.cache
 def get_model_loader() -> ModelLoader:
+    """
+    Dependency provider that returns a callable which loads a model by version.
+
+    This indirection allows tests to override model loading cleanly:
+    - In production, FastAPI will call `get_model_loader()` and receive a
+      function that can be used to load the model.
+    - In tests, dependency_overrides can replace `get_model_loader()` with
+      a lambda that returns a fake model instead of reading from disk.
+    """
+
     def impl(version: str) -> SpamModel:
         return load_model(version)
 
@@ -143,4 +162,11 @@ def get_model_loader() -> ModelLoader:
 
 
 def get_model(request: Request) -> SpamModel:
+    """
+    FastAPI dependency that returns the pre-loaded model from app state.
+
+    The lifespan function stores the active model instance on
+    `app.state.model` during startup. Routes can depend on this instead
+    of reloading the model per request.
+    """
     return request.app.state.model

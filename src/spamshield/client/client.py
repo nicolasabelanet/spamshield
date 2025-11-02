@@ -26,7 +26,11 @@ class SpamShieldAPIClient:
     """
 
     def __init__(
-        self, url: str, api_key: str, api_secret: str, _client: httpx.Client
+        self,
+        url: str,
+        api_key: str,
+        api_secret: str,
+        _client: httpx.Client | None = None,
     ) -> None:
         """
         Initialize a new SpamShield API client.
@@ -38,7 +42,9 @@ class SpamShieldAPIClient:
         api_key : str
             Public API key used for identification and signature generation.
         api_secret : str
-            secret key used for signing requests.
+            Secret key used for signing requests.
+        _client : httpx.Client | None
+            Optional underlying httpx client used to make requests.
         """
         self._client: httpx.Client = _client or httpx.Client()
         self._url: str = url
@@ -91,7 +97,7 @@ class SpamShieldAPIClient:
 
         Returns
         -------
-        requests.Response
+        httpx.Response
             Raw HTTP response object from the SpamShield API.
 
         Raises

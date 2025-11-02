@@ -16,22 +16,27 @@ logger = logging.getLogger(f"{static_config.API_TITLE}")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Manage the full application lifespan for the SpamShield API.
+    Application lifespan manager for the SpamShield API.
 
-    Ensures that logging is configured before serving requests
-    and that the spam classification model is loaded and ready to
-    make inferences.
+    Initializes and tears down global runtime components such as logging,
+    model loading, and observability dependencies.
+
+    This function is executed once during application startup and shutdown
+    by FastAPI, ensuring that all shared resources are prepared before
+    serving requests.
 
     Parameters
     ----------
     app : FastAPI
-        The FastAPI application instance passed by the framework.
+        The FastAPI application instance.
 
     Notes
     -----
-    - The spam model dependency is explicitly invoked here to "warm up"
-      the model before handling requests.
-    - Logging is configured once globally using app-level settings.
+    - Settings, metrics, and model dependencies respect any test-time
+      dependency overrides defined via `app.dependency_overrides`.
+    - The spam model is explicitly loaded ("warmed up") here so that
+      the first inference request does not incur load-time latency.
+    - Structured logging is configured before any request handling.
     """
     # Retrieve and invoke the settings dependency to preload the settings.
     # If dependency overrides are provided (e.g. during testing), use those instead.

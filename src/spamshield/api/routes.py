@@ -37,7 +37,6 @@ def health(
     HealthResponse
         A simple payload with `"status": "ok"` and the current model version.
     """
-    print(spam_model.version)
     return HealthResponse(status="ok", model_version=spam_model.version)
 
 
@@ -72,9 +71,6 @@ def app_metrics(
         all metric values (e.g., request counts, latency histograms, etc.)
         registered in `spamshield.api.metrics`.
     """
-
-    print(id(metrics))
-
     return Response(
         metrics.render(),
         media_type=prometheus_client.CONTENT_TYPE_LATEST,
@@ -92,38 +88,49 @@ def predict(
     settings: Annotated[config.Settings, Depends(config.get_settings)],
 ):
     """
-    Predict whether input text samples are spam or ham.
+    Classify input text messages as spam or ham.
 
-    This endpoint accepts a batch of text strings, runs them through the
-    trained spam classification pipeline, and returns predicted labels
-    with corresponding spam probabilities.
+    This endpoint accepts a batch of text strings, runs inference using
+    the loaded spam model, and returns a structured response with
+    per-text labels and spam scores.
 
-    The endpoint enforces authentication, rate limiting, and input size constraints.
+    Access to this endpoint is protected by `require_api_key`, and input
+    size/length is enforced to defend the service from abuse.
 
     Parameters
     ----------
-    request : Request
-        The FastAPI request context.
     prediction_request : PredictRequest
-        The input payload containing one or more text strings to classify.
+        Pydantic model containing a list of input texts (`texts`).
+    metrics_mgr : MetricsManager
+        Shared Prometheus metrics manager used to record request metrics
+        and inference latency. Provided via dependency injection so tests
+        can supply a clean registry.
     spam_model : SpamModel
-        The loaded spam detection model used for inference.
+        The loaded spam/ham classifier. This model is warmed at startup
+        and shared via `app.state.model`.
+    settings : Settings
+        Runtime configuration, including request size limits.
 
     Returns
     -------
     PredictResponse
-        A response containing a list of predictions (each containing `label` and
-        `prob_spam` fields).
+        Object containing a list of predictions. Each prediction has:
+        - `label`: "spam" or "ham"
+        - `score`: model's spam probability (float in [0, 1])
 
     Raises
     ------
     HTTPException
-        - 413 if the number of texts exceeds `MAX_TEXTS_PER_REQUEST`.
-        - 413 if any text exceeds `MAX_TEXT_LEN`.
-        - 401 if authentication fails (via dependency).
-    """
+        - 413 if the request contains too many text items.
+        - 413 if any single text exceeds the max allowed length.
+        - 401 if authentication fails (enforced at router level).
 
-    print(id(metrics))
+    Notes
+    -----
+    - Inference latency is recorded via `metrics_mgr.infer_time`.
+    - Additional telemetry (request counts, request payload size,
+      end-to-end latency) can also be attached here or via middleware.
+    """
     # Reject requests with too many text samples.
     if len(prediction_request.texts) > settings.MAX_TEXTS_PER_REQUEST:
         raise HTTPException(status_code=413, detail="Too many items")

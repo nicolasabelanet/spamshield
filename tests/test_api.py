@@ -295,6 +295,14 @@ def test_predict_handles_maximum_text_length(
     assert data["detail"] == "Item too large"
 
 
+def test_predict_rejects_incorrect_api_key(client: TestClient):
+    """Unauthorized if an incorrect API key header is provided."""
+    res = client.post("/predict", json={}, headers={"x-api-key": "garbage"})
+    assert res.status_code == 401
+    body = res.json()
+    assert body["detail"] == "Unauthorized"
+
+
 def test_predict_rejects_missing_api_key(client: TestClient):
     """Unauthorized if no API key header is provided."""
     res = client.post("/predict", json={})
