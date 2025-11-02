@@ -1,82 +1,88 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
+from contextlib import asynccontextmanager
+import logging
+from typing import Final
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
-from starlette.responses import Response
 
-from spamshield.api.auth import require_api_key
-from spamshield.api.config import settings
+from spamshield.api import config, model, static_config
+from spamshield.api import metrics
 from spamshield.api.logs import configure_logging
-from spamshield.api.metrics import INFER_TIME
 from spamshield.api.middleware import RequestContextMiddleware
-from spamshield.api.schemas import (
-    HealthResponse,
-    Prediction,
-    PredictRequest,
-    PredictResponse,
+from spamshield.api import routes
+
+logger = logging.getLogger(f"{static_config.API_TITLE}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manage the full application lifespan for the SpamShield API.
+
+    Ensures that logging is configured before serving requests
+    and that the spam classification model is loaded and ready to
+    make inferences.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The FastAPI application instance passed by the framework.
+
+    Notes
+    -----
+    - The spam model dependency is explicitly invoked here to "warm up"
+      the model before handling requests.
+    - Logging is configured once globally using app-level settings.
+    """
+    # Retrieve and invoke the settings dependency to preload the settings.
+    # If dependency overrides are provided (e.g. during testing), use those instead.
+    settings: config.Settings = app.dependency_overrides.get(
+        config.get_settings, config.get_settings
+    )()
+    logger.info("Loaded settings")
+
+    app.state.settings = settings
+
+    # Configure structured logging early in the startup process.
+    configure_logging(json_logs=settings.LOG_JSON, level=settings.LOG_LEVEL)
+
+    # Enable CORS for configured origins (if enabled in settings).
+    if settings.ENABLE_CORS and settings.CORS_ORIGINS:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[str(o) for o in settings.CORS_ORIGINS],
+            allow_methods=["POST", "GET", "OPTIONS"],
+            allow_headers=["*"],
+        )
+
+    # Retrieve and invoke the metrics manager dependency to preload the metrics
+    # manager. If dependency overrides are provided (e.g. during testing), use those instead.
+    metrics_manager: metrics.MetricsManager = app.dependency_overrides.get(
+        metrics.get_metrics_manager, metrics.get_metrics_manager
+    )()
+    logger.info("Loaded metrics manager")
+
+    # Add the metrics manager to app state for use in middleware.
+    app.state.metrics_manager = metrics_manager
+
+    model_loader: model.ModelLoader = app.dependency_overrides.get(
+        model.get_model_loader, model.get_model_loader
+    )()
+    spam_model = model_loader(settings.MODEL_VERSION)
+    app.state.model = spam_model
+
+    logger.info(f"Loaded spam model {spam_model.version}")
+
+    # Yield control back to FastAPI — the app is now fully initialized.
+    yield
+
+
+# Instantiate the FastAPI app with the lifespan manager.
+app: Final[FastAPI] = FastAPI(
+    lifespan=lifespan, title=static_config.API_TITLE, version=static_config.API_VERSION
 )
-from spamshield.api.service import get_model
 
-configure_logging(json_logs=settings.LOG_JSON, level=settings.LOG_LEVEL)
-
-app = FastAPI(title=settings.API_TITLE, version=settings.API_VERSION)
+# Add contextual and performance middlewares.
 app.add_middleware(RequestContextMiddleware)
 
-limiter = Limiter(get_remote_address)
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
-
-
-app.add_middleware(SlowAPIMiddleware)
-
-
-if settings.ENABLE_CORS and settings.CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(o) for o in settings.CORS_ORIGINS],
-        allow_methods=["POST", "GET", "OPTIONS"],
-        allow_headers=["*"],
-    )
-
-
-@app.get("/health", response_model=HealthResponse)
-def health():
-    m = get_model()
-    return {"status": "ok", "model_version": m.version}
-
-
-@app.get("/ready")
-def ready():
-    _ = get_model()
-    return {"ready": True}
-
-
-@app.get("/metrics")
-def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-
-
-@app.post(
-    "/predict", response_model=PredictResponse, dependencies=[Depends(require_api_key)]
-)
-@limiter.limit(settings.RATE_LIMIT)
-def predict(request: Request, prediction_request: PredictRequest):
-    if len(prediction_request.texts) > settings.MAX_TEXTS_PER_REQUEST:
-        raise HTTPException(status_code=413, detail="Too many items")
-
-    if any(len(t) > settings.MAX_TEXT_LEN for t in prediction_request.texts):
-        raise HTTPException(status_code=413, detail="Item too large")
-
-    spam_model = get_model()
-
-    with INFER_TIME.time():
-        preds = spam_model.predict(prediction_request.texts)
-
-    return {
-        "predictions": [
-            Prediction(label=label, prob_spam=prob) for label, prob in preds
-        ]
-    }
+# Register API routes.
+app.include_router(routes.router)
