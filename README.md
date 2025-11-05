@@ -24,8 +24,6 @@ SpamShield combines classical ML techniques with modern deployment practices to 
 
 ## 📊 Model Performance
 
-Below are placeholders for the visualizations generated during training (saved to `models/<version>/`):
-
 ### Precision–Recall Curve
 
 <img width="1062" height="702" alt="precision_recall_curve" src="https://github.com/user-attachments/assets/9c1598ca-c877-4881-8528-806906736a0e" />
