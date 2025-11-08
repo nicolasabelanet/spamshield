@@ -3,7 +3,7 @@
 [![Coverage](https://codecov.io/github/nicolasabelanet/spamshield/graph/badge.svg?token=9VTOFAKGQB)](https://codecov.io/github/nicolasabelanet/spamshield)
 [![CI](https://github.com/nicolasabelanet/spamshield/actions/workflows/main.yaml/badge.svg)](https://github.com/nicolasabelanet/spamshield/actions/workflows/main.yaml)
 
-SpamShield is a lightweight, production-ready machine-learning system for classifying SMS text messages as **spam** or **ham** (not spam).
+SpamShield is a lightweight, production-style machine-learning system for classifying SMS text messages as **spam** or **ham** (not spam).
 It includes a **Python-based model training pipeline**, a **FastAPI prediction service**, and a **secure, signed REST API** for remote inference.
 
 ---
@@ -18,7 +18,7 @@ SpamShield combines classical ML techniques with modern deployment practices to 
 - **Evaluation metrics** include F1 score, Precision, Recall, and average precision (AUC-PR).
 - **Model packaging** exports reproducible `.joblib` files with integrity verification (SHA-256 hashes and metadata).
 - **API service** exposes `/predict`, `/health`, `/ready`, and `/metrics` endpoints under FastAPI,
-  with request-level Prometheus metrics, rate-limiting, and optional HMAC authentication.
+  with request-level Prometheus metrics and optional HMAC authentication.
 
 ---
 
@@ -67,7 +67,6 @@ The server recomputes this signature to verify authenticity and ensure the paylo
   - `model_inference_seconds` — inference-only timing
   - `request_payload_bytes` — incoming payload size distribution
 - **JSON-structured logging** with request IDs for traceability
-- **Rate limiting** via `slowapi` to prevent abuse
 
 ---
 
@@ -142,7 +141,7 @@ While designed to mimic production environments, SpamShield is intentionally sim
 6. **Send a prediction request:**
 
    ```bash
-   uv run scripts/request -u http://localhost:8000 -m "Click here for free cash!"
+   uv run scripts/request.py -u http://localhost:8000 -m "Click here for free cash!"
    ```
 
    **Example Response:**
